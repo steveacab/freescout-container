@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9999:80"
+    volumes:
+      - /var/www/html:/usr/share/nginx/html
+    restart: always
+    
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - '8080:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+      # Add any other Stream port you want to expose
+      # - '21:21' # FTP
+    environment:
+      # Mysql/Maria connection parameters:
+      DB_MYSQL_HOST: "db"
+      DB_MYSQL_PORT: 3306
+      DB_MYSQL_USER: "npm"
+      DB_MYSQL_PASSWORD: "npm"
+      DB_MYSQL_NAME: "npm"
+      # Uncomment this if IPv6 is not enabled on your host
+      # DISABLE_IPV6: 'true'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    depends_on:
+      - db
+
+  db:
+    image: 'jc21/mariadb-aria:latest'
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 'npm'
+      MYSQL_DATABASE: 'npm'
+      MYSQL_USER: 'npm'
+      MYSQL_PASSWORD: 'npm'
+      MARIADB_AUTO_UPGRADE: '1'
+    volumes:
+      - ./mysql:/var/lib/mysql
+    
+  freescout-app:
+    image: tiredofit/freescout
+    container_name: freescout-app
+    ports:
+      - "80:80"
+    depends_on:
+      - freescout-db
+    volumes:
+      - ./data:/www/html
+      - ./logs/:/www/logs
+    environment:
+      - CONTAINER_NAME=freescout-app
+      - DB_HOST=freescout-db
+      - DB_NAME=freescout
+      - DB_USER=freescout
+      - DB_PASS=freescout
+      - SITE_URL=http://192.168.56.129
+      - ADMIN_EMAIL=antonio.chiurazzi@gmail.com
+      - ADMIN_PASS=freescout
+      - ENABLE_SSL_PROXY=FALSE
+      - DISPLAY_ERRORS=FALSE
+      - TIMEZONE=Europe/Berlin
+    restart: always
+
+  freescout-db:
+    image: tiredofit/mariadb
+    container_name: freescout-db
+    volumes:
+      - ./db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=freescout
+      - MYSQL_USER=freescout
+      - MYSQL_PASSWORD=freescout
+    restart: always
+
+  freescout-db-backup:
+    container_name: freescout-db-backup
+    image: tiredofit/db-backup
+    depends_on:
+      - freescout-db
+    volumes:
+      - ./dbbackup:/backup
+    environment:
+      - CONTAINER_NAME=freescout-db-backup
+      - DB_HOST=freescout-db
+      - DB_TYPE=mariadb
+      - DB_NAME=freescout
+      - DB_USER=freescout
+      - DB_PASS=freescout
+      - DB01_BACKUP_INTERVAL=1440
+      - DB01_BACKUP_BEGIN=0000
+      - DB_CLEANUP_TIME=8640
+      - COMPRESSION=BZ
+      - MD5=TRUE
+    restart: always
