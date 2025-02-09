@@ -63,7 +63,7 @@ services:
       - DB_USER=freescout
       - DB_PASS=freescout
       - SITE_URL=http://192.168.56.129
-      - ADMIN_EMAIL=antonio.chiurazzi@gmail.com
+      - ADMIN_EMAIL=yourmail@change.me
       - ADMIN_PASS=freescout
       - ENABLE_SSL_PROXY=FALSE
       - DISPLAY_ERRORS=FALSE
