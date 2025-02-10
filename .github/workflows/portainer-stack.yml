@@ -1,28 +1,17 @@
-name: publish
+name: Build Docker image
 on:
   push:
-    branches: [main]
-    paths-ignore:
-      - "README.md"
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - "README.md"
-  workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Login with Github Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build & Publish to Github Container registry
-        run:  | 
-                 docker build . --tag ghcr.io/steveacab/portainer-stack-gcr-demo:latest
-                 docker run ghcr.io/steveacab/portainer-stack-gcr-demo:latest
-                 docker push ghcr.io/steveacab/portainer-stack-gcr-demo:latest
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and tag image
+        COMMIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+        run: docker build -t ${{ github.repository }}:$COMMIT_SHA -f path/to/Dockerfile .
