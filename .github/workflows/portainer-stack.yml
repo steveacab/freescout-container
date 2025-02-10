@@ -14,4 +14,4 @@ jobs:
 
       - name: Build and tag image
         COMMIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-        run: docker build -t ${{ github.repository }}:$COMMIT_SHA -f path/to/Dockerfile .
+        run: docker build -t ${{ steveacab/freescout-container }}:$COMMIT_SHA -f https://raw.githubusercontent.com/steveacab/freescout-container/refs/heads/main/portainer-stack .
