@@ -1,0 +1,41 @@
+services:
+  freescout-db:
+    image: mariadb:10.5
+    container_name: freescout-db
+
+    environment:
+      MYSQL_ROOT_PASSWORD: freescout
+      MYSQL_DATABASE: freescout
+      MYSQL_USER: freescout
+      MYSQL_PASSWORD: freescout
+    volumes:
+      - /portainer/Files/AppData/Config/freescout/db:/var/lib/mysql:rw
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+
+  freescout:
+    image: tiredofit/freescout:latest
+    container_name: freescout
+    ports:
+      - 80:80
+    volumes:
+      - /portainer/Files/AppData/Config/freescout/data:/data:rw
+      - /portainer/Files/AppData/Config/freescout/logs/:/www/logs:rw
+    environment:
+      ADMIN_EMAIL: mail@gmail.com
+      ADMIN_PASS: changeme
+      SITE_URL: http://change_ip:80/
+      DB_HOST: freescout-db
+      DB_NAME: freescout
+      DB_USER: freescout
+      DB_PASS: freescout
+    restart: always
+    depends_on:
+      freescout-db:
+        condition: service_healthy
